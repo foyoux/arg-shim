@@ -298,6 +298,11 @@ pattern = "-ssh {user}@{host} -P {port}"
 template = "ssh -p {{port | 22}} {{user}}@{{host}}"
 
 # [[rules]]
+# name = "Example: Regex (Advanced)"
+# regex = '''^--target\s+(?P<host>[a-zA-Z0-9.-]+)(\s+--port\s+(?P<port>\d+))?'''
+# template = "ssh {{port | 22}} {{host}}"
+
+# [[rules]]
 # name = "Example: Simple Positional"
 # template = "echo User is {{1}}, Host is {{2}}"
 "#;
