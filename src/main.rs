@@ -162,8 +162,19 @@ fn load_config(exe_name: &str) -> Option<Config> {
     }
 
     if let Ok(current_dir) = env::current_dir() {
+        // 1. Try exact match (e.g. putty.exe.toml)
         config_paths.push(current_dir.join(format!("{}.arg-shim.toml", exe_name)));
         config_paths.push(current_dir.join(format!("{}.toml", exe_name)));
+
+        // 2. Try stem match (e.g. putty.toml) if different
+        let path = PathBuf::from(exe_name);
+        if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+            if stem != exe_name {
+                config_paths.push(current_dir.join(format!("{}.arg-shim.toml", stem)));
+                config_paths.push(current_dir.join(format!("{}.toml", stem)));
+            }
+        }
+
         config_paths.push(current_dir.join("arg-shim.toml"));
     }
 
