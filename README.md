@@ -76,7 +76,7 @@ arg-shim Hello World
 fallback_raw = true
 
 [[rules]]
-# Optional: Only apply if the executable is named "putty" (case-insensitive)
+# Optional: Only apply if the executable is named "putty" (case-sensitive)
 app_name = "putty"
 
 # Strategy A: Simple Pattern

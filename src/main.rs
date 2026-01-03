@@ -83,8 +83,8 @@ fn main() {
         }
     }
 
-    // Remove extension for matching
-    let app_identity = exe_name.to_lowercase();
+    // Use original case for matching
+    let app_identity = exe_name;
 
     // 1. Load Config
     let config = load_config(exe_name).unwrap_or_default();
@@ -107,7 +107,7 @@ fn main() {
     for rule in &config.rules {
         // 1. Match app_name
         if let Some(ref target_app) = rule.app_name {
-            if !app_identity.contains(&target_app.to_lowercase()) {
+            if !app_identity.contains(target_app) {
                 continue;
             }
         }
@@ -283,7 +283,7 @@ fn handle_init() {
 # Optional: name of the rule
 name = "Example: Putty to SSH"
 
-# Optional: executable name to match (case-insensitive)
+# Optional: executable name to match (case-sensitive)
 # app_name = "putty"
 
 # Strategy A: Simple Pattern (Recommended)
