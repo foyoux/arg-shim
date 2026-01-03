@@ -6,12 +6,21 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize)]
 struct Config {
     #[serde(default = "default_fallback_raw")]
     fallback_raw: bool,
     #[serde(default)]
     rules: Vec<Rule>,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            fallback_raw: default_fallback_raw(),
+            rules: Vec::new(),
+        }
+    }
 }
 
 fn default_fallback_raw() -> bool {
