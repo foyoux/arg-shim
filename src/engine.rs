@@ -107,7 +107,10 @@ fn render_template(template: &str, context: &Context) -> String {
 
         // 2. Try positional arguments
         if let Ok(idx) = key.parse::<usize>() {
-            if let Some(val) = context.positional.get(idx) {
+            if idx == 0 {
+                return context.exe_name.to_string();
+            }
+            if let Some(val) = context.positional.get(idx - 1) {
                 return val.clone();
             }
         }
