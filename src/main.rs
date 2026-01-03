@@ -178,6 +178,25 @@ fn load_config(exe_name: &str) -> Option<Config> {
         config_paths.push(current_dir.join("arg-shim.toml"));
     }
 
+    if let Ok(exe_path) = env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            // 1. Try exact match (e.g. putty.exe.toml) in exe dir
+            config_paths.push(exe_dir.join(format!("{}.arg-shim.toml", exe_name)));
+            config_paths.push(exe_dir.join(format!("{}.toml", exe_name)));
+
+            // 2. Try stem match (e.g. putty.toml) in exe dir
+            let path = PathBuf::from(exe_name);
+            if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+                if stem != exe_name {
+                    config_paths.push(exe_dir.join(format!("{}.arg-shim.toml", stem)));
+                    config_paths.push(exe_dir.join(format!("{}.toml", stem)));
+                }
+            }
+
+            config_paths.push(exe_dir.join("arg-shim.toml"));
+        }
+    }
+
     if let Ok(app_data) = env::var("APPDATA") {
         config_paths.push(PathBuf::from(app_data).join("arg-shim").join("config.toml"));
     }
