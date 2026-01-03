@@ -37,6 +37,22 @@ struct Context<'a> {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+
+    // Handle CLI flags
+    if args.len() == 2 {
+        match args[1].as_str() {
+            "--init" => {
+                handle_init();
+                return;
+            }
+            "--help" | "-h" => {
+                print_help();
+                return;
+            }
+            _ => {}
+        }
+    }
+
     let exe_path = env::current_exe().unwrap_or_else(|_| PathBuf::from("arg-shim"));
     let exe_name = exe_path
         .file_name()
@@ -219,4 +235,61 @@ fn render_template(template: &str, context: &Context) -> String {
         // 4. Return default if provided, else empty
         default.map(|s| s.to_string()).unwrap_or_default()
     }).to_string()
+}
+
+fn handle_init() {
+    let target = PathBuf::from("arg-shim.toml");
+    if target.exists() {
+        println!("Error: 'arg-shim.toml' already exists in the current directory.");
+        return;
+    }
+
+    let template = r#"# arg-shim configuration template
+
+# If no rules match, should we copy the raw arguments to the clipboard? (Default: true)
+# fallback_raw = true
+
+[[rules]]
+# Optional: name of the rule
+name = "Example: Putty to SSH"
+
+# Optional: executable name to match (case-insensitive)
+# app_name = "putty"
+
+# Strategy A: Simple Pattern (Recommended)
+# Captures {user}, {host}, {port} from the command line.
+# Spaces in the pattern match any amount of whitespace.
+pattern = "-ssh {user}@{host} -P {port}"
+
+# Output Template
+# {{user}} refers to the captured variable.
+# {{1}}, {{2}}... refers to the original argument index.
+# {{port | 22}} provides a default value of 22 if {port} is not captured.
+template = "ssh -p {{port | 22}} {{user}}@{{host}}"
+
+# [[rules]]
+# name = "Example: Simple Positional"
+# template = "echo User is {{1}}, Host is {{2}}"
+"#;
+
+    match fs::write(&target, template) {
+        Ok(_) => println!("Successfully created 'arg-shim.toml' in the current directory."),
+        Err(e) => println!("Error: Failed to write configuration file: {}", e),
+    }
+}
+
+fn print_help() {
+    println!(r#"arg-shim - A flexible CLI argument shim and transformer
+
+USAGE:
+    arg-shim [FLAGS] [ARGUMENTS...]
+
+FLAGS:
+    --init          Generate a default 'arg-shim.toml' configuration file in the current directory.
+    -h, --help      Print this help message.
+
+TRANSFORMATION:
+    When run without flags, arg-shim will intercept arguments and transform them 
+    based on the loaded configuration files, then copy the result to the clipboard.
+"#);
 }
