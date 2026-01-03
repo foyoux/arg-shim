@@ -1,4 +1,4 @@
-# arg-spy
+# arg-shim
 
 A simple command-line tool to spy on (capture) and copy command-line arguments directly to your clipboard.
 Now evolving into a powerful **Argument Shim & Adapter**.
@@ -22,14 +22,14 @@ cargo install --path .
 
 ### From Releases
 
-Download the pre-compiled binaries for your platform from the [Releases](https://github.com/foyoux/arg-spy/releases) page.
+Download the pre-compiled binaries for your platform from the [Releases](https://github.com/foyoux/arg-shim/releases) page.
 
 ## Usage
 
 Simply pass any text or arguments to the command:
 
 ```bash
-arg-spy Hello World!
+arg-shim Hello World!
 # Clipboard now contains: "Hello World!"
 ```
 
@@ -39,17 +39,17 @@ Useful for capturing paths, complex flags, or any output you want to quickly mov
 
 ## Design Whitepaper (v0.2 Planning)
 
-We are actively developing a configuration-driven transformation engine. This will allow `arg-spy` to act as a shim for various tools.
+We are actively developing a configuration-driven transformation engine. This will allow `arg-shim` to act as a shim for various tools.
 
 ### 1. Configuration Loading Priority
 
 To support multiple "identities" (e.g., masquerading as `putty.exe` or `winscp.exe`), configuration is loaded in the following order (first match wins):
 
-1.  **Environment Variable**: `ARG_SPY_CONFIG` (Highest priority, for debugging/scripts)
-2.  **App-Specific Config**: `./<exe_name>.arg-spy.toml` (Recommended, e.g., `putty.arg-spy.toml`)
+1.  **Environment Variable**: `ARG_SHIM_CONFIG` (Highest priority, for debugging/scripts)
+2.  **App-Specific Config**: `./<exe_name>.arg-shim.toml` (Recommended, e.g., `putty.arg-shim.toml`)
 3.  **App-Specific Generic**: `./<exe_name>.toml` (e.g., `putty.toml` - Use with caution to avoid conflicts)
-4.  **Directory Generic**: `./arg-spy.toml` (Shared rules for all tools in the folder)
-5.  **Global User Config**: `%APPDATA%/arg-spy/config.toml` or `~/.config/arg-spy/config.toml`
+4.  **Directory Generic**: `./arg-shim.toml` (Shared rules for all tools in the folder)
+5.  **Global User Config**: `%APPDATA%/arg-shim/config.toml` or `~/.config/arg-shim/config.toml`
 6.  **Built-in Default**: Fallback to raw argument copying.
 
 ### 2. Configuration Structure

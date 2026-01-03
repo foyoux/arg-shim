@@ -35,10 +35,10 @@ jobs:
       - name: Prepare Asset
         shell: bash
         run: |
-          cp target/${{ matrix.target }}/release/arg-spy.exe arg-spy-${{ matrix.suffix }}.exe
+          cp target/${{ matrix.target }}/release/arg-shim.exe arg-shim-${{ matrix.suffix }}.exe
 
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: arg-spy-${{ matrix.suffix }}.exe
+          files: arg-shim-${{ matrix.suffix }}.exe
