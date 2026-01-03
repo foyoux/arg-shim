@@ -58,6 +58,10 @@ fn main() {
                 print_help();
                 return;
             }
+            "--version" | "-v" => {
+                println!("arg-shim {}", env!("CARGO_PKG_VERSION"));
+                return;
+            }
             "--check" => {
                 dry_run = true;
                 args_start_idx = 2; // Skip --check for the actual arguments
@@ -305,6 +309,7 @@ FLAGS:
     --init          Generate a default 'arg-shim.toml' configuration file in the current directory.
     --check <args>  Test transformation against <args> and print result without copying to clipboard.
     -h, --help      Print this help message.
+    -v, --version   Print version information.
 
 TRANSFORMATION:
     When run without flags, arg-shim will intercept arguments and transform them 
