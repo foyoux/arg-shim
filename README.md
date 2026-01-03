@@ -1,7 +1,6 @@
 # arg-shim
 
-A simple command-line tool to spy on (capture) and copy command-line arguments directly to your clipboard.
-Now evolving into a powerful **Argument Shim & Adapter**.
+A flexible CLI argument shim and transformer for Windows. Capture process arguments and rewrite them using configurable patterns and templates.
 
 ## Features
 
