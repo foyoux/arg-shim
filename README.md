@@ -4,12 +4,18 @@ A flexible CLI argument shim and transformer for Windows. Capture process argume
 
 ## Features
 
-- **Quick capture**: Joins all provided arguments with a single space and copies them to the system clipboard.
-- **Cross-platform core**: Built with Rust and `arboard` for reliable clipboard access.
-- **Windows Optimized**: Specifically supports Windows `x86_64` and `aarch64` (ARM64).
-- **Configurable Transformation** (Coming Soon): Transform captured arguments using patterns, regex, and templates into any format you need (e.g., Putty args -> OpenSSH command).
+- **Intercept & Transform**: Capture arguments from one tool (e.g., `putty`) and rewrite them for another (e.g., `ssh`).
+- **Pattern Matching**: Easy-to-use `{variable}` pattern syntax (e.g., `-ssh {user}@{host}`).
+- **Regex Support**: Full Regular Expression support for complex argument parsing.
+- **Template Engine**: Reconstruct commands using named variables, positional arguments (`{{1}}`), and default values (`{{port | 22}}`).
+- **Clipboard Integration**: Automatically copies the transformed result to your clipboard.
+- **Cross-Architecture**: Native support for Windows x64 and ARM64.
 
 ## Installation
+
+### From Releases
+
+Download the pre-compiled binaries for your platform from the [Releases](https://github.com/foyoux/arg-shim/releases) page.
 
 ### From Source
 
@@ -19,49 +25,61 @@ Ensure you have [Rust](https://rustup.rs/) installed:
 cargo install --path .
 ```
 
-### From Releases
-
-Download the pre-compiled binaries for your platform from the [Releases](https://github.com/foyoux/arg-shim/releases) page.
-
 ## Usage
 
-Simply pass any text or arguments to the command:
+### Basic Usage (Spy Mode)
+
+By default, if no configuration is found, `arg-shim` simply joins all arguments and copies them to the clipboard.
 
 ```bash
-arg-shim Hello World!
-# Clipboard now contains: "Hello World!"
+arg-shim Hello World
+# Clipboard: "Hello World"
 ```
 
-Useful for capturing paths, complex flags, or any output you want to quickly move to another application.
+### Shim Mode (Transformation)
 
----
+1.  **Initialize Configuration**:
+    Run `arg-shim --init` to generate a starter `arg-shim.toml` in the current directory.
 
-## Design Whitepaper (v0.2 Planning)
+    ```bash
+    arg-shim --init
+    ```
 
-We are actively developing a configuration-driven transformation engine. This will allow `arg-shim` to act as a shim for various tools.
+2.  **Configure Rules**:
+    Edit `arg-shim.toml` to define how arguments should be parsed and transformed.
 
-### 1. Configuration Loading Priority
+3.  **Test Configuration**:
+    Use `--check` to test your rules without overwriting the clipboard.
 
-To support multiple "identities" (e.g., masquerading as `putty.exe` or `winscp.exe`), configuration is loaded in the following order (first match wins):
+    ```bash
+    arg-shim --check -ssh user@host
+    # Output: ssh -p 22 user@host (printed to console)
+    ```
 
-1.  **Environment Variable**: `ARG_SHIM_CONFIG` (Highest priority, for debugging/scripts)
-2.  **App-Specific Config**: `./<exe_name>.arg-shim.toml` (Recommended, e.g., `putty.arg-shim.toml`)
-3.  **App-Specific Generic**: `./<exe_name>.toml` (e.g., `putty.toml` - Use with caution to avoid conflicts)
-4.  **Directory Generic**: `./arg-shim.toml` (Shared rules for all tools in the folder)
-5.  **Global User Config**: `%APPDATA%/arg-shim/config.toml` or `~/.config/arg-shim/config.toml`
-6.  **Built-in Default**: Fallback to raw argument copying.
+4.  **Deploy**:
+    Rename `arg-shim.exe` to the target program name (e.g., `putty.exe`) and place it where the original program was expected.
 
-### 2. Configuration Structure
+## Configuration
+
+`arg-shim` looks for configuration files in the following order (first match wins):
+
+1.  **Environment Variable**: `ARG_SHIM_CONFIG`
+2.  **App-Specific Config**: `./<exe_name>.arg-shim.toml` (e.g., `putty.arg-shim.toml`)
+3.  **App-Specific Generic**: `./<exe_name>.toml` (e.g., `putty.toml`)
+4.  **Directory Generic**: `./arg-shim.toml`
+5.  **Global User Config**: `%APPDATA%\arg-shim\config.toml`
+
+### Configuration Structure
 
 ```toml
-# Global setting: If no rules match, fallback to copying raw arguments? (Default: true)
+# If no rules match, should we copy the raw arguments to the clipboard?
 fallback_raw = true
 
 [[rules]]
-# Optional: Only apply if the executable is named "putty" (or "putty.exe")
+# Optional: Only apply if the executable is named "putty" (case-insensitive)
 app_name = "putty"
 
-# Strategy A: Simple Pattern Matching (like CLI help)
+# Strategy A: Simple Pattern
 # Automatically extracts {user}, {host}, {port}
 pattern = "-ssh {user}@{host} -P {port}"
 
@@ -69,34 +87,16 @@ pattern = "-ssh {user}@{host} -P {port}"
 # regex = '''...'''
 
 # Output Template
-# Supports:
-# - Named variables: {{user}}
-# - Positional arguments: {{1}}, {{2}} (Original args index)
-# - Default values: {{port | 22}}
 template = "ssh -p {{port | 22}} {{user}}@{{host}}"
 ```
 
-### 3. Variable System
+### Template Syntax
 
-*   **Named Variables**: Extracted via `pattern` (e.g., `{host}`) or `regex` named groups.
-*   **Positional Variables**: `{{1}}`, `{{2}}` correspond to the 1st, 2nd argument from the original command. `{{0}}` is the program name.
-*   **Built-ins**: `{{RAW_ARGS}}`, `{{CWD}}`.
-*   **Pipes**: `{{var | default_value}}` provided fallback if variable is missing or empty.
-
-## Roadmap / Todos
-
-- [ ] **Core Logic**: Refactor `main.rs` to support a "Pipeline" architecture (Load Config -> Match -> Extract -> Render -> Output).
-- [ ] **Config Loader**: Implement the 5-layer configuration loading strategy.
-- [ ] **Parser Engine**:
-    - [ ] Implement Regex extraction.
-    - [ ] Implement Simple Pattern matching (convert `{var}` pattern to Regex).
-- [ ] **Template Engine**:
-    - [ ] Implement `{{var}}` replacement.
-    - [ ] Implement `{{N}}` positional argument replacement.
-    - [ ] Implement `{{var | default}}` syntax.
-- [ ] **CLI Improvements**:
-    - [ ] Add `--init` flag to generate a default configuration file.
-    - [ ] Add `--check` or `--dry-run` to test configuration against arguments without modifying clipboard.
+- **Named Variables**: `{{user}}` (captured from pattern/regex)
+- **Positional Arguments**: `{{1}}`, `{{2}}` (1-based index of original arguments)
+- **Program Name**: `{{0}}` or `{{EXE_NAME}}`
+- **Raw Arguments**: `{{RAW_ARGS}}`
+- **Default Values**: `{{port | 22}}` (Use '22' if 'port' is missing or empty)
 
 ## License
 
