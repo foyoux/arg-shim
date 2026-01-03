@@ -50,9 +50,11 @@ arg-shim Hello World
 
 3.  **Test Configuration**:
     Use `--check` to test your rules without overwriting the clipboard.
+    You can use `--app <name>` to simulate running as a different executable name.
 
     ```bash
-    arg-shim --check -ssh user@host
+    # Test as if the program was named "putty"
+    arg-shim --check --app putty -ssh user@host
     # Output: ssh -p 22 user@host (printed to console)
     ```
 
@@ -64,10 +66,15 @@ arg-shim Hello World
 `arg-shim` looks for configuration files in the following order (first match wins):
 
 1.  **Environment Variable**: `ARG_SHIM_CONFIG`
-2.  **App-Specific Config**: `./<exe_name>.arg-shim.toml` (e.g., `putty.arg-shim.toml`)
-3.  **App-Specific Generic**: `./<exe_name>.toml` (e.g., `putty.toml`)
-4.  **Directory Generic**: `./arg-shim.toml`
-5.  **Global User Config**: `%APPDATA%\arg-shim\config.toml`
+2.  **Current Working Directory**:
+    *   `./<exe_name>.arg-shim.toml` (e.g., `putty.exe.arg-shim.toml`)
+    *   `./<exe_name>.toml`
+    *   `./<exe_stem>.arg-shim.toml` (e.g., `putty.arg-shim.toml` if named `putty.exe`)
+    *   `./<exe_stem>.toml` (e.g., `putty.toml`)
+    *   `./arg-shim.toml`
+3.  **Executable Directory** (Directory where the `.exe` resides):
+    *   Same search patterns as above.
+4.  **Global User Config**: `%APPDATA%\arg-shim\config.toml`
 
 ### Configuration Structure
 
@@ -84,7 +91,7 @@ app_name = "putty"
 pattern = "-ssh {user}@{host} -P {port}"
 
 # Strategy B: Regex (Advanced)
-# regex = '''...'''
+# regex = '''^--target\s+(?P<host>[a-zA-Z0-9.-]+)(\s+--port\s+(?P<port>\d+))?'''
 
 # Output Template
 template = "ssh -p {{port | 22}} {{user}}@{{host}}"
