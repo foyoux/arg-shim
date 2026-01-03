@@ -37,9 +37,18 @@ struct Context<'a> {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+    let exe_path = env::current_exe().unwrap_or_else(|_| PathBuf::from("arg-shim"));
+    let exe_name = exe_path
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("arg-shim");
+    
+    let is_management_mode = exe_name.to_lowercase() == "arg-shim" || exe_name.to_lowercase() == "arg-shim.exe";
+    let mut dry_run = false;
+    let mut args_start_idx = 1;
 
-    // Handle CLI flags
-    if args.len() == 2 {
+    // Handle CLI flags only if running as arg-shim
+    if is_management_mode && args.len() >= 2 {
         match args[1].as_str() {
             "--init" => {
                 handle_init();
@@ -49,24 +58,26 @@ fn main() {
                 print_help();
                 return;
             }
+            "--check" => {
+                dry_run = true;
+                args_start_idx = 2; // Skip --check for the actual arguments
+                if args.len() < 3 {
+                    println!("Usage: arg-shim --check <arguments to test>");
+                    return;
+                }
+            }
             _ => {}
         }
     }
 
-    let exe_path = env::current_exe().unwrap_or_else(|_| PathBuf::from("arg-shim"));
-    let exe_name = exe_path
-        .file_name()
-        .and_then(|s| s.to_str())
-        .unwrap_or("arg-shim");
-    
-    // Remove extension for matching if desired, or keep it. Let's keep it for precision.
+    // Remove extension for matching
     let app_identity = exe_name.to_lowercase();
 
     // 1. Load Config
     let config = load_config(exe_name).unwrap_or_default();
 
-    let raw_args = if args.len() > 1 {
-        args[1..].join(" ")
+    let raw_args = if args.len() > args_start_idx {
+        args[args_start_idx..].join(" ")
     } else {
         String::new()
     };
@@ -118,7 +129,13 @@ fn main() {
         }
     });
 
-    if !final_text.is_empty() {
+    if final_text.is_empty() {
+        return;
+    }
+
+    if dry_run {
+        println!("Dry run result:\n{}", final_text);
+    } else {
         let mut clipboard = Clipboard::new().unwrap();
         clipboard.set_text(final_text).unwrap();
     }
@@ -286,10 +303,13 @@ USAGE:
 
 FLAGS:
     --init          Generate a default 'arg-shim.toml' configuration file in the current directory.
+    --check <args>  Test transformation against <args> and print result without copying to clipboard.
     -h, --help      Print this help message.
 
 TRANSFORMATION:
     When run without flags, arg-shim will intercept arguments and transform them 
     based on the loaded configuration files, then copy the result to the clipboard.
+
+    Note: The flags above only work when the executable is named 'arg-shim'.
 "#);
 }
