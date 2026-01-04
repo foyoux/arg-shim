@@ -66,14 +66,16 @@ arg-shim Hello World
 `arg-shim` looks for configuration files in the following order (first match wins):
 
 1.  **Environment Variable**: `ARG_SHIM_CONFIG`
-2.  **Current Working Directory**:
-    *   `./<exe_name>.arg-shim.toml` (e.g., `putty.exe.arg-shim.toml`)
+2.  **Current Working Directory** (Only checked if the executable is strictly named `arg-shim` or `arg-shim.exe`):
+    *   `./<exe_name>.arg-shim.toml`
     *   `./<exe_name>.toml`
-    *   `./<exe_stem>.arg-shim.toml` (e.g., `putty.arg-shim.toml` if named `putty.exe`)
-    *   `./<exe_stem>.toml` (e.g., `putty.toml`)
     *   `./arg-shim.toml`
 3.  **Executable Directory** (Directory where the `.exe` resides):
-    *   Same search patterns as above.
+    *   `./<exe_name>.arg-shim.toml` (e.g., `putty.exe.arg-shim.toml`)
+    *   `./<exe_name>.toml`
+    *   `./<exe_stem>.arg-shim.toml` (e.g., `putty.arg-shim.toml`)
+    *   `./<exe_stem>.toml` (e.g., `putty.toml`)
+    *   `./arg-shim.toml`
 4.  **Global User Config**: `%APPDATA%\arg-shim\config.toml`
 
 ### Configuration Structure
@@ -100,9 +102,11 @@ template = "ssh -p {{port | 22}} {{user}}@{{host}}"
 ### Template Syntax
 
 - **Named Variables**: `{{user}}` (captured from pattern/regex)
-- **Positional Arguments**: `{{1}}`, `{{2}}` (1-based index of original arguments)
+- **Positional Arguments**: `{{1}}` (1st arg), `{{2}}` (2nd arg)
 - **Program Name**: `{{0}}` or `{{EXE_NAME}}`
 - **Raw Arguments**: `{{RAW_ARGS}}`
+- **Current Directory**: `{{CWD}}`
+- **Environment Variables**: `{{ENV:USERNAME}}`, `{{ENV:PATH}}`
 - **Default Values**: `{{port | 22}}` (Use '22' if 'port' is missing or empty)
 
 ## License

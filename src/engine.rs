@@ -115,10 +115,17 @@ fn render_template(template: &str, context: &Context) -> String {
             }
         }
 
-        // 3. Try built-ins
+        // 3. Try built-ins & Environment variables
         match key {
             "RAW_ARGS" => return context.raw_args.clone(),
             "EXE_NAME" => return context.exe_name.to_string(),
+            "CWD" => return std::env::current_dir()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or_default(),
+            k if k.starts_with("ENV:") => {
+                let env_key = &k[4..];
+                return std::env::var(env_key).unwrap_or_default();
+            },
             _ => {}
         }
 

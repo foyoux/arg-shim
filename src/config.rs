@@ -42,9 +42,15 @@ pub fn load(exe_name: &str) -> Option<Config> {
         config_paths.push(PathBuf::from(env_path));
     }
 
-    // 2. Current Working Directory
-    if let Ok(current_dir) = env::current_dir() {
-        add_search_paths(&mut config_paths, &current_dir, exe_name);
+    // 2. Current Working Directory (Only if running as arg-shim)
+    // This is useful for testing/debugging, but we don't want arbitrary CWD configs
+    // being picked up when shimmed as another tool.
+    let is_arg_shim = exe_name == "arg-shim" || exe_name == "arg-shim.exe";
+    
+    if is_arg_shim {
+        if let Ok(current_dir) = env::current_dir() {
+            add_search_paths(&mut config_paths, &current_dir, exe_name);
+        }
     }
 
     // 3. Executable Directory
