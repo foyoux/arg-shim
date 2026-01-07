@@ -84,6 +84,9 @@ arg-shim Hello World
 # If no rules match, should we copy the raw arguments to the clipboard?
 fallback_raw = true
 
+# Default delay (in ms) between clipboard copies when using multiple templates (Default: 1000)
+default_delay_ms = 1000
+
 [[rules]]
 # Optional: Only apply if the executable is named "putty" (case-sensitive)
 app_name = "putty"
@@ -93,10 +96,22 @@ app_name = "putty"
 pattern = "-ssh {user}@{host} -P {port}"
 
 # Strategy B: Regex (Advanced)
-# regex = '''^--target\s+(?P<host>[a-zA-Z0-9.-]+)(\s+--port\s+(?P<port>\d+))?'''
+# regex = '''...'''
 
 # Output Template
-template = "ssh -p {{port | 22}} {{user}}@{{host}}"
+# Single template (backward compatibility)
+# template = "ssh -p {{port | 22}} {{user}}@{{host}}"
+
+# Multiple Templates (Multi-step Clipboard)
+# The last item will be the active clipboard content.
+# Previous items will be available in Clipboard History (Win+V).
+templates = [
+    "{{password}}",       # Copied first
+    "ssh {{user}}@{host}" # Copied last (active)
+]
+
+# Optional: Override global delay for this rule
+delay = 500 
 ```
 
 ### Template Syntax

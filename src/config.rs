@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 pub struct Config {
     #[serde(default = "default_fallback_raw")]
     pub fallback_raw: bool,
+    #[serde(default = "default_delay_ms")]
+    pub default_delay_ms: u64,
     #[serde(default)]
     pub rules: Vec<Rule>,
 }
@@ -15,6 +17,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             fallback_raw: default_fallback_raw(),
+            default_delay_ms: default_delay_ms(),
             rules: Vec::new(),
         }
     }
@@ -24,6 +27,10 @@ fn default_fallback_raw() -> bool {
     true
 }
 
+fn default_delay_ms() -> u64 {
+    1000
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Rule {
     #[allow(dead_code)]
@@ -31,7 +38,9 @@ pub struct Rule {
     pub app_name: Option<String>,
     pub pattern: Option<String>,
     pub regex: Option<String>,
-    pub template: String,
+    pub template: Option<String>,
+    pub templates: Option<Vec<String>>,
+    pub delay: Option<u64>,
 }
 
 pub fn load(exe_name: &str) -> Option<Config> {
@@ -108,6 +117,9 @@ pub fn create_default_config() -> std::io::Result<()> {
 # If no rules match, should we copy the raw arguments to the clipboard? (Default: true)
 # fallback_raw = true
 
+# Default delay (in ms) between clipboard copies when using multiple templates (Default: 1000)
+# default_delay_ms = 1000
+
 [[rules]]
 # Optional: name of the rule
 name = "Example: Putty to SSH"
@@ -124,10 +136,15 @@ pattern = "-ssh {user}@{host} -P {port}"
 # regex = '''^--target\s+(?P<host>[a-zA-Z0-9.-]+)(\s+--port\s+(?P<port>\d+))?'''
 
 # Output Template
-# {{user}} refers to the captured variable.
-# {{1}}, {{2}}... refers to the original argument index.
-# {{port | 22}} provides a default value of 22 if {port} is not captured.
+# You can use 'template' (single string) or 'templates' (array of strings)
 template = "ssh -p {{port | 22}} {{user}}@{{host}}"
+
+# Multi-step clipboard example:
+# templates = [
+#    "{{password}}",       # Copied first (will be in history)
+#    "ssh {{user}}@{host}" # Copied last (will be active)
+# ]
+# delay = 500 # Override global delay for this rule
 
 # [[rules]]
 # name = "Example: Simple Positional"

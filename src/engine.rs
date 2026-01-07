@@ -10,7 +10,7 @@ pub struct Context<'a> {
     pub raw_args: String,
 }
 
-pub fn process(rules: &[Rule], context: &mut Context) -> Option<String> {
+pub fn process(rules: &[Rule], context: &mut Context) -> Option<(Vec<String>, Option<u64>)> {
     for rule in rules {
         // 1. Match app_name (Case-sensitive)
         if let Some(ref target_app) = rule.app_name {
@@ -20,20 +20,34 @@ pub fn process(rules: &[Rule], context: &mut Context) -> Option<String> {
         }
 
         // 2. Try match and extract
-        if let Some(ref pattern) = rule.pattern {
+        let matched = if let Some(ref pattern) = rule.pattern {
             let re_str = pattern_to_regex(pattern);
-            if let Some(caps) = extract_variables(&re_str, &context.raw_args) {
-                context.named = caps;
-                return Some(render_template(&rule.template, context));
-            }
+            extract_variables(&re_str, &context.raw_args)
         } else if let Some(ref re_str) = rule.regex {
-            if let Some(caps) = extract_variables(re_str, &context.raw_args) {
-                context.named = caps;
-                return Some(render_template(&rule.template, context));
-            }
+            extract_variables(re_str, &context.raw_args)
         } else {
             // No pattern/regex means it matches anything (if app_name matched)
-            return Some(render_template(&rule.template, context));
+            Some(HashMap::new())
+        };
+
+        if let Some(caps) = matched {
+            context.named = caps;
+            
+            // Collect templates
+            let mut results = Vec::new();
+            
+            // Priority: 'templates' array > 'template' string
+            if let Some(ref list) = rule.templates {
+                for t in list {
+                    results.push(render_template(t, context));
+                }
+            } else if let Some(ref t) = rule.template {
+                results.push(render_template(t, context));
+            }
+            
+            if !results.is_empty() {
+                return Some((results, rule.delay));
+            }
         }
     }
     None

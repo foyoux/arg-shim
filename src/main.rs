@@ -5,6 +5,8 @@ use arboard::Clipboard;
 use std::collections::HashMap;
 use std::env;
 use std::path::PathBuf;
+use std::thread;
+use std::time::Duration;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -15,8 +17,8 @@ fn main() {
         .unwrap_or("arg-shim");
     
     // Check if we are running in "Management Mode" (invoked as arg-shim)
-    let is_management_mode = exe_name.to_lowercase() == "arg-shim" 
-                          || exe_name.to_lowercase() == "arg-shim.exe";
+    let is_management_mode = exe_name.eq_ignore_ascii_case("arg-shim") 
+                          || exe_name.eq_ignore_ascii_case("arg-shim.exe");
     
     let mut dry_run = false;
     
@@ -98,26 +100,39 @@ fn main() {
     // Process Rules
     let result = engine::process(&config.rules, &mut context);
 
-    // Fallback logic
-    let final_text = result.unwrap_or_else(|| {
-        if config.fallback_raw {
-            raw_args_str
-        } else {
-            String::new()
+    // Prepare final items to process
+    let (items, delay) = match result {
+        Some((list, rule_delay)) => (list, rule_delay.unwrap_or(config.default_delay_ms)),
+        None => {
+            if config.fallback_raw {
+                (vec![raw_args_str], 0)
+            } else {
+                (Vec::new(), 0)
+            }
         }
-    });
+    };
 
-    if final_text.is_empty() {
+    if items.is_empty() {
         return;
     }
 
     if dry_run {
-        println!("Dry run result:\n{}", final_text);
+        println!("Dry run result (delay={}ms):", delay);
+        for (i, item) in items.iter().enumerate() {
+            println!("[{}] {}", i + 1, item);
+        }
     } else {
         match Clipboard::new() {
             Ok(mut clipboard) => {
-                if let Err(e) = clipboard.set_text(final_text) {
-                    eprintln!("Error: Failed to set clipboard content: {}", e);
+                for (i, item) in items.iter().enumerate() {
+                    // If not the first item, wait for the delay
+                    if i > 0 && delay > 0 {
+                        thread::sleep(Duration::from_millis(delay));
+                    }
+                    
+                    if let Err(e) = clipboard.set_text(item) {
+                        eprintln!("Error: Failed to set clipboard content (item {}): {}", i + 1, e);
+                    }
                 }
             },
             Err(e) => eprintln!("Error: Failed to initialize clipboard: {}", e),
