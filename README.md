@@ -94,7 +94,13 @@ app_name = "putty"
 
 # 策略 A：简单模式
 # 自动提取 {user}, {host}, {port}
-pattern = "-ssh {user}@{host} -P {port}"
+# pattern = "-ssh {user}@{host} -P {port}"
+
+# 支持多个模式（任意匹配一个即可）
+patterns = [
+    "-ssh {user}@{host} -P {port}",
+    "-ssh {user}@{host}" # 兼容不带端口的情况
+]
 
 # 策略 B：正则表达式（高级）
 # regex = '''^--target\s+(?P<host>[a-zA-Z0-9.-]+)(\s+--port\s+(?P<port>\d+))?'''

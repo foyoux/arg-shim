@@ -37,6 +37,7 @@ pub struct Rule {
     pub name: Option<String>,
     pub app_name: Option<String>,
     pub pattern: Option<String>,
+    pub patterns: Option<Vec<String>>,
     pub regex: Option<String>,
     pub template: Option<String>,
     pub templates: Option<Vec<String>>,
@@ -130,7 +131,12 @@ name = "示例：Putty 转 SSH"
 # 策略 A：简单模式匹配（推荐）
 # 从命令行参数中捕获 {user}, {host}, {port}
 # 模式中的空格匹配任意长度的空白字符
+# 可以使用 'pattern' (单个) 或 'patterns' (数组，任意匹配一个即可)
 pattern = "-ssh {user}@{host} -P {port}"
+# patterns = [
+#     "-ssh {user}@{host} -P {port}",
+#     "-ssh {user}@{host}" # 兼容不带端口的情况
+# ]
 
 # 策略 B：正则表达式（高级）
 # regex = '''^--target\s+(?P<host>[a-zA-Z0-9.-]+)(\s+--port\s+(?P<port>\d+))?'''

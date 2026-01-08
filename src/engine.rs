@@ -20,15 +20,37 @@ pub fn process(rules: &[Rule], context: &mut Context) -> Option<(Vec<String>, Op
         }
 
         // 2. Try match and extract
-        let matched = if let Some(ref pattern) = rule.pattern {
-            let re_str = pattern_to_regex(pattern);
-            extract_variables(&re_str, &context.raw_args)
-        } else if let Some(ref re_str) = rule.regex {
-            extract_variables(re_str, &context.raw_args)
-        } else {
-            // No pattern/regex means it matches anything (if app_name matched)
-            Some(HashMap::new())
-        };
+        let mut matched = None;
+
+        // 2a. Check simple patterns (patterns list OR single pattern)
+        let mut patterns_to_check = Vec::new();
+        if let Some(ref list) = rule.patterns {
+            patterns_to_check.extend(list.iter());
+        }
+        if let Some(ref single) = rule.pattern {
+            patterns_to_check.push(single);
+        }
+
+        for p in patterns_to_check {
+            let re_str = pattern_to_regex(p);
+            if let Some(caps) = extract_variables(&re_str, &context.raw_args) {
+                matched = Some(caps);
+                break;
+            }
+        }
+
+        // 2b. If no simple pattern matched, check regex
+        if matched.is_none() {
+            if let Some(ref re_str) = rule.regex {
+                matched = extract_variables(re_str, &context.raw_args);
+            }
+        }
+        
+        // 2c. Fallback if no pattern/regex defined
+        if matched.is_none() && rule.pattern.is_none() && rule.patterns.is_none() && rule.regex.is_none() {
+             // No pattern/regex means it matches anything (if app_name matched)
+             matched = Some(HashMap::new());
+        }
 
         if let Some(caps) = matched {
             context.named = caps;
