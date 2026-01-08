@@ -96,10 +96,13 @@ app_name = "putty"
 # 自动提取 {user}, {host}, {port}
 # pattern = "-ssh {user}@{host} -P {port}"
 
-# 支持多个模式（任意匹配一个即可）
+# 支持多个模式（累积匹配）
+# 1. 所有匹配成功的模式都会被执行。
+# 2. 捕获的变量会合并，如果变量名相同，后定义的模式会覆盖前面的值。
 patterns = [
-    "-ssh {user}@{host} -P {port}",
-    "-ssh {user}@{host}" # 兼容不带端口的情况
+    "-ssh {user}@{host} -P {port}", # 尝试捕获所有变量
+    "-ssh {user}@{host}",           # 兼容不带端口的情况
+    "--extra {extra}"               # 额外捕获其他参数
 ]
 
 # 策略 B：正则表达式（高级）

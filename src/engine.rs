@@ -20,9 +20,11 @@ pub fn process(rules: &[Rule], context: &mut Context) -> Option<(Vec<String>, Op
         }
 
         // 2. Try match and extract
-        let mut matched = None;
+        let mut all_caps = HashMap::new();
+        let mut any_matched = false;
 
-        // 2a. Check simple patterns (patterns list OR single pattern)
+        // 2a. Check simple patterns (patterns list AND single pattern)
+        // We iterate ALL of them and merge results.
         let mut patterns_to_check = Vec::new();
         if let Some(ref list) = rule.patterns {
             patterns_to_check.extend(list.iter());
@@ -34,25 +36,29 @@ pub fn process(rules: &[Rule], context: &mut Context) -> Option<(Vec<String>, Op
         for p in patterns_to_check {
             let re_str = pattern_to_regex(p);
             if let Some(caps) = extract_variables(&re_str, &context.raw_args) {
-                matched = Some(caps);
-                break;
+                all_caps.extend(caps);
+                any_matched = true;
             }
         }
 
-        // 2b. If no simple pattern matched, check regex
-        if matched.is_none() {
+        // 2b. If no simple pattern matched, check regex as fallback
+        if !any_matched {
             if let Some(ref re_str) = rule.regex {
-                matched = extract_variables(re_str, &context.raw_args);
+                if let Some(caps) = extract_variables(re_str, &context.raw_args) {
+                    all_caps.extend(caps);
+                    any_matched = true;
+                }
             }
         }
         
         // 2c. Fallback if no pattern/regex defined
-        if matched.is_none() && rule.pattern.is_none() && rule.patterns.is_none() && rule.regex.is_none() {
+        if !any_matched && rule.pattern.is_none() && rule.patterns.is_none() && rule.regex.is_none() {
              // No pattern/regex means it matches anything (if app_name matched)
-             matched = Some(HashMap::new());
+             any_matched = true;
         }
 
-        if let Some(caps) = matched {
+        if any_matched {
+            context.named = all_caps;
             context.named = caps;
             
             // Collect templates
