@@ -59,7 +59,6 @@ pub fn process(rules: &[Rule], context: &mut Context) -> Option<(Vec<String>, Op
 
         if any_matched {
             context.named = all_caps;
-            context.named = caps;
             
             // Collect templates
             let mut results = Vec::new();
