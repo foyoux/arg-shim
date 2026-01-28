@@ -1,6 +1,6 @@
 [package]
 name = "arg-shim"
-version = "0.6.2"
+version = "0.6.3"
 authors = ["foyou"]
 description = "A flexible CLI argument shim and transformer for Windows"
 repository = "https://github.com/foyoux/arg-shim"
