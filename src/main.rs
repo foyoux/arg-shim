@@ -16,9 +16,9 @@ fn main() {
         .and_then(|s| s.to_str())
         .unwrap_or("arg-shim");
     
-    // Check if we are running in "Management Mode" (invoked as arg-shim)
-    let is_management_mode = exe_name.eq_ignore_ascii_case("arg-shim") 
-                          || exe_name.eq_ignore_ascii_case("arg-shim.exe");
+    // Check if we are running in "Management Mode" (invoked as arg-shim*)
+    // We check if it starts with "arg-shim" to handle suffixes like versions or arch (e.g. arg-shim-x86.exe)
+    let is_management_mode = exe_name.to_lowercase().starts_with("arg-shim");
     
     let mut dry_run = false;
     

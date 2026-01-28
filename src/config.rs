@@ -47,32 +47,21 @@ pub struct Rule {
 pub fn load(exe_name: &str) -> Option<Config> {
     let mut config_paths = Vec::new();
 
-    // 1. Environment Variable
-    if let Ok(env_path) = env::var("ARG_SHIM_CONFIG") {
-        config_paths.push(PathBuf::from(env_path));
-    }
-
-    // 2. Current Working Directory (Only if running as arg-shim)
-    // This is useful for testing/debugging, but we don't want arbitrary CWD configs
-    // being picked up when shimmed as another tool.
-    let is_arg_shim = exe_name == "arg-shim" || exe_name == "arg-shim.exe";
+    // 1. Current Working Directory (Only if running as arg-shim*)
+    // This is useful for testing/debugging via --check
+    let is_arg_shim = exe_name.to_lowercase().starts_with("arg-shim");
     
     if is_arg_shim {
         if let Ok(current_dir) = env::current_dir() {
-            add_search_paths(&mut config_paths, &current_dir, exe_name);
+            config_paths.push(current_dir.join("arg-shim.toml"));
         }
     }
 
-    // 3. Executable Directory
+    // 2. Executable Directory (The main config location)
     if let Ok(exe_path) = env::current_exe() {
         if let Some(exe_dir) = exe_path.parent() {
-            add_search_paths(&mut config_paths, exe_dir, exe_name);
+            config_paths.push(exe_dir.join("arg-shim.toml"));
         }
-    }
-
-    // 4. AppData
-    if let Ok(app_data) = env::var("APPDATA") {
-        config_paths.push(PathBuf::from(app_data).join("arg-shim").join("config.toml"));
     }
 
     // Try to load the first existing one
@@ -86,24 +75,6 @@ pub fn load(exe_name: &str) -> Option<Config> {
         }
     }
     None
-}
-
-fn add_search_paths(paths: &mut Vec<PathBuf>, base_dir: &Path, exe_name: &str) {
-    // 1. Try exact match (e.g. putty.exe.toml)
-    paths.push(base_dir.join(format!("{}.arg-shim.toml", exe_name)));
-    paths.push(base_dir.join(format!("{}.toml", exe_name)));
-
-    // 2. Try stem match (e.g. putty.toml) if exe_name has an extension
-    let path = Path::new(exe_name);
-    if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-        if stem != exe_name {
-            paths.push(base_dir.join(format!("{}.arg-shim.toml", stem)));
-            paths.push(base_dir.join(format!("{}.toml", stem)));
-        }
-    }
-
-    // 3. Generic config
-    paths.push(base_dir.join("arg-shim.toml"));
 }
 
 pub fn create_default_config() -> std::io::Result<()> {

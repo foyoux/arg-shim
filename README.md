@@ -66,18 +66,12 @@ arg-shim Hello World
 
 `arg-shim` 按照以下顺序查找配置文件（优先使用第一个匹配项）：
 
-1.  **环境变量**：`ARG_SHIM_CONFIG`
-2.  **当前工作目录**（仅当可执行文件名为 `arg-shim` 或 `arg-shim.exe` 时才会检查）：
-    *   `./<exe_name>.arg-shim.toml`
-    *   `./<exe_name>.toml`
+1.  **当前工作目录**（仅当可执行文件名以 `arg-shim` 开头时才会检查，用于调试）：
     *   `./arg-shim.toml`
-3.  **可执行文件所在目录**（`.exe` 文件所在的文件夹）：
-    *   `./<exe_name>.arg-shim.toml`（例如 `putty.exe.arg-shim.toml`）
-    *   `./<exe_name>.toml`
-    *   `./<exe_stem>.arg-shim.toml`（例如 `putty.arg-shim.toml`）
-    *   `./<exe_stem>.toml`（例如 `putty.toml`）
+2.  **可执行文件所在目录**（`.exe` 文件所在的文件夹，正式部署位置）：
     *   `./arg-shim.toml`
-4.  **全局用户配置**：`%APPDATA%\arg-shim\config.toml`
+
+> 注意：旧版本中支持的 `putty.toml` 或 `%APPDATA%` 等路径已不再支持。所有配置统一汇总到 `arg-shim.toml` 中，通过 `app_name` 区分规则。
 
 ### 配置结构
 
